@@ -1,0 +1,43 @@
+# Python virtual environment
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Environment variables / secrets
+.env
+.env.*
+*.key
+*.pem
+
+# Downloaded outputs
+output/
+logs/
+
+# Temporary files
+*.tmp
+*.part
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Test/cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Packaging
+build/
+dist/
+*.egg-info/

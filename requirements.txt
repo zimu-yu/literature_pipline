@@ -1,0 +1,5 @@
+curl-cffi
+beautifulsoup4
+pypdf
+tqdm
+fonttools
