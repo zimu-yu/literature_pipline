@@ -14,20 +14,23 @@ class WileyAdapter(PublisherAdapter):
     def discover(self, doi: str) -> dict:
 
         # 论文官方页面
+        api_key = os.getenv("WILEY_API_KEY")
         landing_url = f"https://onlinelibrary.wiley.com/doi/{doi}"
-
-        response = requests.get(
-            landing_url,
-            impersonate="chrome",
-            timeout=30
-        )
-
-        response.raise_for_status()
-
-        soup = BeautifulSoup(
-            response.text,
-            "html.parser"
-        )
+        soup = BeautifulSoup("", "html.parser")
+        try:
+            response = requests.get(
+                landing_url,
+                impersonate="chrome",
+                timeout=30
+            )
+            response.raise_for_status()
+            landing_url = response.url
+            soup = BeautifulSoup(response.text, "html.parser")
+        except Exception:
+            if not api_key:
+                raise
+            # A webpage failure must not prevent an independent API route.
+            print("Wiley landing page unavailable; trying configured API. SI discovery unresolved.")
 
         candidates = []
 
@@ -35,7 +38,6 @@ class WileyAdapter(PublisherAdapter):
         # Wiley TDM API
         # =====================================================
 
-        api_key = os.getenv("WILEY_API_KEY")
 
         if api_key:
 
@@ -131,7 +133,7 @@ class WileyAdapter(PublisherAdapter):
             if "downloadSupplement" in href:
 
                 url = urljoin(
-                    response.url,
+                    landing_url,
                     href
                 )
 
@@ -140,7 +142,7 @@ class WileyAdapter(PublisherAdapter):
 
         return {
             "publisher": "Wiley",
-            "landing_url": response.url,
+            "landing_url": landing_url,
             "fulltext_candidates": candidates,
             "si_urls": si_urls,
         }

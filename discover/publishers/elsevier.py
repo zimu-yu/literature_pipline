@@ -11,21 +11,27 @@ from ..base import PublisherAdapter
 class ElsevierAdapter(PublisherAdapter):
 
     def discover(self, doi: str) -> dict:
-        response = requests.get(
-            f"https://doi.org/{doi}",
-            impersonate="chrome",
-            timeout=30
-        )
-
-        response.raise_for_status()
-
-        landing_url = response.url
-        soup = BeautifulSoup(response.text, "html.parser")
+        api_key = os.getenv("ELSEVIER_API_KEY")
+        landing_url = f"https://doi.org/{doi}"
+        soup = BeautifulSoup("", "html.parser")
+        try:
+            response = requests.get(
+                landing_url,
+                impersonate="chrome",
+                timeout=30
+            )
+            response.raise_for_status()
+            landing_url = response.url
+            soup = BeautifulSoup(response.text, "html.parser")
+        except Exception:
+            if not api_key:
+                raise
+            # A webpage failure must not prevent an independent API route.
+            print("Elsevier landing page unavailable; trying configured API. SI discovery unresolved.")
 
         candidates = []
 
         # Elsevier 官方 API
-        api_key = os.getenv("ELSEVIER_API_KEY")
 
         if api_key:
             api_url = (

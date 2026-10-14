@@ -123,6 +123,24 @@ After running the DOI set:
 python evaluate.py
 ```
 
+Evaluation uses `dois_24.txt` as the fixed sample, including valid DOIs
+with missing or unreadable results as failures. For a different batch:
+
+```bash
+python evaluate.py --file your_dois.txt
+```
+
+No discovered SI links means `si_complete: null` (unknown), not proof
+that no SI exists. Rerun acquisition to replace old results produced by
+previous versions. Nonempty SI lists still describe discovered resources;
+this fix does not add an independent reference inventory.
+
+Run offline regression tests with:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
 The evaluator reports metrics such as:
 
 - full-text acquisition rate

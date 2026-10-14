@@ -1,34 +1,48 @@
 # evaluate.py
 
+import argparse
 import json
 from pathlib import Path
 from collections import Counter, defaultdict
+from normalize import normalize_doi
 
 
 OUTPUT_DIR = Path("output")
+DOI_FILE = Path("dois_24.txt")
 
 
-def load_manifests():
-    manifests = []
+def load_manifests(doi_file=None):
+    # Fix the denominator before reading results; unrelated output is excluded.
+    sample = Path(doi_file) if doi_file is not None else DOI_FILE
+    expected = {}
+    for raw_doi in sample.read_text(encoding="utf-8").splitlines():
+        if not raw_doi.strip():
+            continue
+        try:
+            doi = normalize_doi(raw_doi)
+        except ValueError as exc:
+            print(f"Excluded invalid input: {exc}")
+            continue
+        expected.setdefault(doi, {
+            "doi": doi,
+            "publisher": "Unknown",
+            "status": "failed",
+            "error": "No readable acquisition manifest for this evaluation DOI",
+            "fulltext": None,
+            "si_complete": None,
+        })
 
     for path in OUTPUT_DIR.glob("*/manifest.json"):
-
         try:
-            with open(
-                path,
-                "r",
-                encoding="utf-8"
-            ) as f:
-                data = json.load(f)
+            data = json.loads(path.read_text(encoding="utf-8"))
+            doi = normalize_doi(data["doi"])
+            if doi in expected:
+                data["doi"] = doi
+                expected[doi] = data
+        except Exception as exc:
+            print(f"Failed to read {path}: {exc}")
 
-            manifests.append(data)
-
-        except Exception as e:
-            print(
-                f"Failed to read {path}: {e}"
-            )
-
-    return manifests
+    return list(expected.values())
 
 
 def percent(n, total):
@@ -283,14 +297,11 @@ def evaluate(manifests):
 
 
 if __name__ == "__main__":
-
-    manifests = load_manifests()
-
-    if not manifests:
-        print(
-            "No manifest.json files found "
-            "under output/"
-        )
-
-    else:
+    parser = argparse.ArgumentParser(description="Evaluate a fixed DOI sample")
+    parser.add_argument("--file", default=str(DOI_FILE), help="Evaluation DOI list")
+    args = parser.parse_args()
+    manifests = load_manifests(args.file)
+    if manifests:
         evaluate(manifests)
+    else:
+        print("No valid evaluation DOIs found.")

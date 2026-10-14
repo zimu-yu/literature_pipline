@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 from acquire import acquire
+from normalize import normalize_doi
 
 
 def run_one(doi: str):
@@ -41,12 +42,16 @@ def load_dois(path: str) -> list:
 
 def run_many(dois: list):
 
-    # 去重，但保留原顺序
-    dois = list(
-        dict.fromkeys(dois)
-    )
-
-    for doi in dois:
+    seen = set()
+    for raw_doi in dois:
+        try:
+            doi = normalize_doi(raw_doi)
+        except ValueError as exc:
+            print(raw_doi, "-> failed:", str(exc))
+            continue
+        if doi in seen:
+            continue
+        seen.add(doi)
         run_one(doi)
 
 

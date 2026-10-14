@@ -1,6 +1,7 @@
 # validate.py
 
 from pathlib import Path
+from typing import Optional
 from xml.etree import ElementTree
 
 from pypdf import PdfReader
@@ -139,10 +140,11 @@ def validate_si(
 def validate_si_complete(
     si_urls: list,
     downloaded_si: list
-) -> bool:
+) -> Optional[bool]:
 
     if not si_urls:
-        return True
+        # No discovered links is not evidence that the article has no SI.
+        return None
 
     if not downloaded_si:
         return False
